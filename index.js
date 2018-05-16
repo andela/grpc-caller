@@ -1,10 +1,10 @@
-const grpc = require('grpc')
-const _ = require('lodash')
-const gi = require('grpc-inspect')
-const pc = require('promisify-call')
-const create = require('grpc-create-metadata')
+const grpc = require('grpc');
+const _ = require('lodash');
+const gi = require('grpc-inspect');
+const pc = require('promisify-call');
+const create = require('grpc-create-metadata');
 
-module.exports = caller
+module.exports = caller;
 
 /**
  * Create client isntance.
@@ -28,118 +28,118 @@ module.exports = caller
  * const services = require('./static/helloworld_grpc_pb')
  * const client = caller('localhost:50051', services.GreeterClient)
  */
-function caller(host, proto, name, isCamel = true, options) {
-  let Ctor
+function caller(host, proto, name, options, isCamel = false) {
+  let Ctor;
   if (_.isString(proto) || (_.isObject(proto) && proto.root && proto.file)) {
     const loaded = grpc.load(proto, undefined, {
-      convertFieldsToCamelCase: isCamel,
-    })
-    const descriptor = gi(loaded)
+      convertFieldsToCamelCase: isCamel
+    });
+    const descriptor = gi(loaded);
     if (!descriptor) {
-      throw new Error(String.raw`Error parsing protocol buffer`)
+      throw new Error(String.raw`Error parsing protocol buffer`);
     }
 
-    Ctor = descriptor.client(name)
+    Ctor = descriptor.client(name);
     if (!Ctor) {
       throw new Error(
         String.raw`Service name ${name} not found in protocol buffer definition`
-      )
+      );
     }
   } else if (_.isObject(proto)) {
-    Ctor = proto
-    options = name
+    Ctor = proto;
+    options = name;
   }
 
   // promisify the client
-  const clientProto = Ctor.prototype
+  const clientProto = Ctor.prototype;
   _.forOwn(clientProto, (v, k) => {
     if (typeof clientProto[k] === 'function') {
       if (!v.responseStream && !v.requestStream) {
         clientProto[k] = function(arg, metadata, options, fn) {
           if (_.isFunction(options)) {
-            fn = options
-            options = undefined
+            fn = options;
+            options = undefined;
           }
           if (_.isFunction(metadata)) {
-            fn = metadata
-            metadata = undefined
+            fn = metadata;
+            metadata = undefined;
           }
           if (
             _.isPlainObject(metadata) &&
             metadata instanceof grpc.Metadata === false
           ) {
-            metadata = create(metadata)
+            metadata = create(metadata);
           }
-          const args = _.compact([arg, metadata, options, fn])
+          const args = _.compact([arg, metadata, options, fn]);
           // only promisify-call functions in simple response / request scenario
-          return pc(this, v, ...args)
-        }
+          return pc(this, v, ...args);
+        };
       } else if (v.responseStream && !v.requestStream) {
         clientProto[k] = function(arg, metadata, options) {
           if (
             _.isPlainObject(metadata) &&
             metadata instanceof grpc.Metadata === false
           ) {
-            metadata = create(metadata)
+            metadata = create(metadata);
           }
-          const args = _.compact([arg, metadata, options])
-          return v.call(this, ...args)
-        }
+          const args = _.compact([arg, metadata, options]);
+          return v.call(this, ...args);
+        };
       } else if (!v.responseStream && v.requestStream) {
         clientProto[k] = function(metadata, options, fn) {
           if (_.isFunction(options)) {
-            fn = options
-            options = undefined
+            fn = options;
+            options = undefined;
           }
           if (_.isFunction(metadata)) {
-            fn = metadata
-            metadata = undefined
+            fn = metadata;
+            metadata = undefined;
           }
           if (
             _.isPlainObject(metadata) &&
             metadata instanceof grpc.Metadata === false
           ) {
-            metadata = create(metadata)
+            metadata = create(metadata);
           }
           if (fn) {
             // normal call
-            const args = _.compact([metadata, options, fn])
-            return v.call(this, ...args)
+            const args = _.compact([metadata, options, fn]);
+            return v.call(this, ...args);
           } else {
             // dual return promsified call with return { call, res }
-            const r = {}
+            const r = {};
             const p = new Promise((resolve, reject) => {
-              const args = _.compact([metadata, options, fn])
+              const args = _.compact([metadata, options, fn]);
               args.push((err, result) => {
-                if (err) reject(err)
-                else resolve(result)
-              })
-              r.call = v.call(this, ...args)
-            })
-            r.res = p
-            return r
+                if (err) reject(err);
+                else resolve(result);
+              });
+              r.call = v.call(this, ...args);
+            });
+            r.res = p;
+            return r;
           }
-        }
+        };
       } else if (v.responseStream && v.requestStream) {
         clientProto[k] = function(metadata, options) {
           if (
             _.isPlainObject(metadata) &&
             metadata instanceof grpc.Metadata === false
           ) {
-            metadata = create(metadata)
+            metadata = create(metadata);
           }
-          const args = _.compact([metadata, options])
-          return v.call(this, ...args)
-        }
+          const args = _.compact([metadata, options]);
+          return v.call(this, ...args);
+        };
       }
     }
-  })
+  });
 
-  return new Ctor(host, options || grpc.credentials.createInsecure())
+  return new Ctor(host, options || grpc.credentials.createInsecure());
 }
 
 /**
  * Utility helper function to create <code>Metadata</code> object from plain Javascript object.
  * See <code>grpc-create-metadata</code> module.
  */
-caller.metadata = create
+caller.metadata = create;
