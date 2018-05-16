@@ -28,11 +28,11 @@ module.exports = caller
  * const services = require('./static/helloworld_grpc_pb')
  * const client = caller('localhost:50051', services.GreeterClient)
  */
-function caller(host, proto, name, options) {
+function caller(host, proto, name, isCamel = true, options) {
   let Ctor
   if (_.isString(proto) || (_.isObject(proto) && proto.root && proto.file)) {
     const loaded = grpc.load(proto, undefined, {
-      convertFieldsToCamelCase: true,
+      convertFieldsToCamelCase: isCamel,
     })
     const descriptor = gi(loaded)
     if (!descriptor) {
