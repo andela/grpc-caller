@@ -1,11 +1,12 @@
 {
   "name": "grpc-caller",
-  "version": "0.3.1",
+  "version": "0.3.8",
   "description": "An improved Node.js gRPC client",
   "main": "index.js",
   "scripts": {
     "test": "ava -v",
-    "docs": "jsdoc2md index.js --heading-depth 3 --template readme.hbs | md-wrap-code > README.md"
+    "docs":
+      "jsdoc2md index.js --heading-depth 3 --template readme.hbs | md-wrap-code > README.md"
   },
   "repository": {
     "type": "git",
@@ -20,12 +21,7 @@
     "url": "https://github.com/bojand/grpc-caller/issues"
   },
   "homepage": "https://github.com/bojand/grpc-caller",
-  "keywords": [
-    "protocol buffer",
-    "protobuf",
-    "grpc",
-    "client"
-  ],
+  "keywords": ["protocol buffer", "protobuf", "grpc", "client"],
   "dependencies": {
     "grpc": "^1.0.1",
     "lodash": "^4.17.2",
@@ -45,9 +41,7 @@
     "test": "test"
   },
   "ava": {
-    "files": [
-      "test/*.test.js"
-    ]
+    "files": ["test/*.test.js"]
   },
   "engines": {
     "node": ">=6.9.0"

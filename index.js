@@ -14,6 +14,8 @@ module.exports = caller;
  *                              the static client constructor object itself
  * @param {String} name - In case of proto path the name of the service as defined in the proto definition.
  * @param {Object} options - Options to be passed to the gRPC client constructor
+ * @param {boolean} isCamel - Flag to indivate whether results should be converted to camel case
+ * @param {Object} grpcOptions - Options to pass to gRPC client initialization
  * @returns {Object}
  *
  * @example <caption>Create client dynamically</caption>
@@ -28,7 +30,14 @@ module.exports = caller;
  * const services = require('./static/helloworld_grpc_pb')
  * const client = caller('localhost:50051', services.GreeterClient)
  */
-function caller(host, proto, name, options, isCamel = false) {
+function caller(
+  host,
+  proto,
+  name,
+  options,
+  isCamel = false,
+  grpcOptions = null
+) {
   let Ctor;
   if (_.isString(proto) || (_.isObject(proto) && proto.root && proto.file)) {
     const loaded = grpc.load(proto, undefined, {
@@ -135,7 +144,15 @@ function caller(host, proto, name, options, isCamel = false) {
     }
   });
 
-  return new Ctor(host, options || grpc.credentials.createInsecure());
+  if (!grpcOptions) {
+    return new Ctor(host, options || grpc.credentials.createInsecure());
+  } else {
+    return new Ctor(
+      host,
+      options || grpc.credentials.createInsecure(),
+      grpcOptions
+    );
+  }
 }
 
 /**
